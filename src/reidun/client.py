@@ -1,0 +1,154 @@
+import logging
+from dataclasses import InitVar, dataclass, field
+from types import TracebackType
+from typing import Mapping, Optional, Tuple, Type, cast
+
+from aiohttp import ClientSession, ClientTimeout
+from aiohttp.helpers import sentinel
+from marshmallow import Schema
+from yarl import URL
+
+from ..serialization import SerializableData
+from ..token_bucket import TokenBucket
+from .auth_method import AuthMethod
+from .endpoint import ApiEndpoint
+from .request import ApiRequest, ApiRequestBuilder, ApiRequestVerbatim
+from .request_method import RequestMethod
+
+_LOG: logging.Logger = logging.getLogger(__name__)
+
+
+@dataclass
+class ApiClient:
+    host: URL
+    encoding: str = field(default="utf8")
+    timeout: InitVar[Optional[ClientTimeout]] = field(default=None)
+    auth: InitVar[Optional[AuthMethod]] = field(default=None)
+    _session: ClientSession = field(init=False)
+    _context_enabled: bool = field(default=False, init=False)
+    _tokens: TokenBucket = field(default_factory=TokenBucket, init=False)
+
+    def __post_init__(
+        self, timeout: Optional[ClientTimeout], auth: Optional[AuthMethod]
+    ) -> None:
+        _LOG.debug(
+            f'Creating an HTTP/S client session with {timeout if timeout is not None else "no"} timeout and {type(auth) if auth is not None else "no"} authentication'
+        )
+        timeout = timeout if timeout is not None else sentinel
+        headers = auth.headers() if auth is not None else None
+        self._session = ClientSession(timeout=timeout, headers=headers)
+
+    def request_builder(self) -> ApiRequestBuilder:
+        return ApiRequestBuilder(self.host)
+
+    async def request_verbatim(
+        self, request: ApiRequestVerbatim, rate_limit: Optional[float] = None
+    ) -> Tuple[bytes, int]:
+        if not self._context_enabled:
+            raise ValueError(
+                "You can only issue requests within an async context manager"
+            )
+
+        await self._tokens.take(rate_limit)
+
+        endpoint_url = request.endpoint_url()
+        _LOG.debug(
+            f"Issuing a {request.method.name} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
+        )
+        async with self._session.request(
+            request.request_method(),
+            endpoint_url,
+            params=request.params,
+            data=request.payload,
+            timeout=request.request_timeout(),
+        ) as response:
+            # FIXME: This is dangerous for large responses, as it loads everything into memory; [aiohttp](https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content)
+            response_data = await response.read()
+            _LOG.debug(f"Received a response with {len(response_data)} bytes of data")
+
+            if not response.ok:
+                _LOG.error(
+                    f"Received an error response from {response.host} with code {response.status}, headers {response.headers}, and data {response_data}"
+                )
+                raise ValueError(
+                    f"The server responded with HTTP status code {response.status}: {response_data}"
+                )
+
+        return response_data.strip(), response.status
+
+    async def request(
+        self, request: ApiRequest[ApiEndpoint]
+    ) -> Tuple[Optional[SerializableData], int]:
+        _LOG.debug(f"Preparing a request to API endpoint {type(request.endpoint)}")
+
+        verbatim_request: ApiRequestVerbatim = request.to_verbatim()
+        response_data, response_status = await self.request_verbatim(
+            verbatim_request, rate_limit=request.endpoint.rate_limit()
+        )
+        if len(response_data) == 0:
+            return None, response_status
+
+        response_data_decoded: str = response_data.decode(self.encoding)
+        response_data_schema: Schema = request.endpoint.response_data_type().Schema()
+        response_data_deserialized = response_data_schema.loads(response_data_decoded)
+        return cast(SerializableData, response_data_deserialized), response_status
+
+    async def get(
+        self, endpoint: ApiEndpoint, params: Optional[Mapping[str, str]] = None
+    ) -> Tuple[Optional[SerializableData], int]:
+        req: ApiRequest[ApiEndpoint] = (
+            self.request_builder()
+            .with_method(RequestMethod.GET)
+            .with_params(params)
+            .build(endpoint)
+        )
+
+        return await self.request(req)
+
+    async def post(
+        self,
+        endpoint: ApiEndpoint,
+        data: SerializableData,
+        params: Optional[Mapping[str, str]] = None,
+        many: Optional[bool] = None,
+    ) -> Tuple[Optional[SerializableData], int]:
+        req: ApiRequest[ApiEndpoint] = (
+            self.request_builder()
+            .with_method(RequestMethod.POST)
+            .with_params(params)
+            .with_data(data, fmt=endpoint.request_format(), many=many)
+            .build(endpoint)
+        )
+
+        return await self.request(req)
+
+    async def put(
+        self,
+        endpoint: ApiEndpoint,
+        data: SerializableData,
+        params: Optional[Mapping[str, str]] = None,
+        many: Optional[bool] = None,
+    ) -> Tuple[Optional[SerializableData], int]:
+        req: ApiRequest[ApiEndpoint] = (
+            self.request_builder()
+            .with_method(RequestMethod.PUT)
+            .with_params(params)
+            .with_data(data, fmt=endpoint.request_format(), many=many)
+            .build(endpoint)
+        )
+
+        return await self.request(req)
+
+    async def __aenter__(self) -> "ApiClient":
+        await self._session.__aenter__()
+        self._context_enabled = True
+        return self
+
+    async def __aexit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
+        await self._session.__aexit__(exc_type, exc_val, exc_tb)
+        self._context_enabled = False
