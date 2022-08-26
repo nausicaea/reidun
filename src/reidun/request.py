@@ -5,7 +5,7 @@ from aiohttp import ClientTimeout, FormData, Payload
 from aiohttp.helpers import sentinel
 from yarl import URL
 
-from ..serialization import OutputFormat, SerializableData, dump_to_payload
+from .serialization import OutputFormat, SerializableData, dump_to_payload
 from .endpoint import ApiEndpoint
 from .request_method import RequestMethod
 

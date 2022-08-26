@@ -8,8 +8,8 @@ from aiohttp.helpers import sentinel
 from marshmallow import Schema
 from yarl import URL
 
-from ..serialization import SerializableData
-from ..token_bucket import TokenBucket
+from .serialization import SerializableData
+from .token_bucket import TokenBucket
 from .auth_method import AuthMethod
 from .endpoint import ApiEndpoint
 from .request import ApiRequest, ApiRequestBuilder, ApiRequestVerbatim

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Type
 
-from ..serialization import OutputFormat, SerializableData
+from .serialization import OutputFormat, SerializableData
 
 
 class ParamsBuilder(ABC):
