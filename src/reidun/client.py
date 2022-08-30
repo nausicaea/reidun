@@ -1,5 +1,5 @@
 import logging
-from dataclasses import InitVar, dataclass, field
+from dataclasses import dataclass, field
 from types import TracebackType
 from typing import Mapping, Optional, Tuple, Type, cast
 
@@ -22,21 +22,10 @@ _LOG: logging.Logger = logging.getLogger(__name__)
 class ApiClient:
     host: URL
     encoding: str = field(default="utf8")
-    timeout: InitVar[Optional[ClientTimeout]] = field(default=None)
-    auth: InitVar[Optional[AuthMethod]] = field(default=None)
-    _session: ClientSession = field(init=False)
-    _context_enabled: bool = field(default=False, init=False)
+    timeout: Optional[ClientTimeout] = field(default=None)
+    auth: Optional[AuthMethod] = field(default=None)
+    _session: Optional[ClientSession] = field(default=None, init=False)
     _tokens: TokenBucket = field(default_factory=TokenBucket, init=False)
-
-    def __post_init__(
-        self, timeout: Optional[ClientTimeout], auth: Optional[AuthMethod]
-    ) -> None:
-        _LOG.debug(
-            f'Creating an HTTP/S client session with {timeout if timeout is not None else "no"} timeout and {type(auth) if auth is not None else "no"} authentication'
-        )
-        timeout = timeout if timeout is not None else sentinel
-        headers = auth.headers() if auth is not None else None
-        self._session = ClientSession(timeout=timeout, headers=headers)
 
     def request_builder(self) -> ApiRequestBuilder:
         return ApiRequestBuilder(self.host)
@@ -44,7 +33,7 @@ class ApiClient:
     async def request_verbatim(
         self, request: ApiRequestVerbatim, rate_limit: Optional[float] = None
     ) -> Tuple[bytes, int]:
-        if not self._context_enabled:
+        if self._session is None:
             raise ValueError(
                 "You can only issue requests within an async context manager"
             )
@@ -53,7 +42,7 @@ class ApiClient:
 
         endpoint_url = request.endpoint_url()
         _LOG.debug(
-            f"Issuing a {request.method.name} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
+            f"Issuing a {request.method} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
         )
         async with self._session.request(
             request.request_method(),
@@ -140,8 +129,11 @@ class ApiClient:
         return await self.request(req)
 
     async def __aenter__(self) -> "ApiClient":
+        timeout = self.timeout if self.timeout is not None else sentinel
+        headers = self.auth.headers() if self.auth is not None else None
+        self._session = ClientSession(timeout=timeout, headers=headers)
+
         await self._session.__aenter__()
-        self._context_enabled = True
         return self
 
     async def __aexit__(
@@ -150,5 +142,6 @@ class ApiClient:
         exc_val: Optional[BaseException],
         exc_tb: Optional[TracebackType],
     ) -> None:
-        await self._session.__aexit__(exc_type, exc_val, exc_tb)
-        self._context_enabled = False
+        if self._session is not None:
+            await self._session.__aexit__(exc_type, exc_val, exc_tb)
+            self._session = None
