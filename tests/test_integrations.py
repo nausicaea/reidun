@@ -49,7 +49,9 @@ async def panopticon() -> Response:
                         "debt": 2000000000000,
                     }
                 ],
-                "criminal_case_ids": [random.randint(0, 1000000) for _ in range(1000)],
+                "criminal_case_ids": [
+                    random.randint(0, 1000000) for _ in range(1000)
+                ],
                 "lawsuits": None,
             }
         )
@@ -71,4 +73,7 @@ async def test_server_side_request_after_client_request_wrt_timeouts() -> None:
 
                 response, _ = await alice.request_verbatim(_req)
                 response_data = json.loads(response.decode("utf-8"))
-                assert response_data == {"equity": 1000000000, "debt": 2000000000000}
+                assert response_data == {
+                    "equity": 1000000000,
+                    "debt": 2000000000000,
+                }

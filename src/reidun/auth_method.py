@@ -31,9 +31,9 @@ class BasicAuth(AuthMethod):
 
     def headers(self) -> Optional[Dict[Union[str, istr], str]]:
         concatenated_creds: str = f"{self.username}:{self.password}"
-        encoded_creds: str = b64encode(concatenated_creds.encode(self.encoding)).decode(
-            self.encoding
-        )
+        encoded_creds: str = b64encode(
+            concatenated_creds.encode(self.encoding)
+        ).decode(self.encoding)
         return {AUTHORIZATION: f"Basic {encoded_creds}"}
 
 

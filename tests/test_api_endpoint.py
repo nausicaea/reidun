@@ -1,13 +1,15 @@
 from typing import Type
-from mashumaro.mixins.json import DataClassJSONMixin
 
 import pytest
+from mashumaro.mixins.json import DataClassJSONMixin
 
 from reidun.endpoint import ApiEndpoint, ParamsBuilder
 
 
 def test_endpoint_is_abstract_class() -> None:
-    with pytest.raises(TypeError, match=".*Can't instantiate abstract class.*"):
+    with pytest.raises(
+        TypeError, match=".*Can't instantiate abstract class.*"
+    ):
         ApiEndpoint()  # type: ignore
 
 

@@ -1,16 +1,18 @@
 from dataclasses import dataclass, field
 from typing import Generic, Mapping, Optional, TypeVar, Union, cast, overload
 
-from aiohttp import ClientTimeout, FormData, Payload, JsonPayload
+from aiohttp import ClientTimeout, FormData, JsonPayload, Payload
 from aiohttp.helpers import sentinel
-from yarl import URL
 from mashumaro.mixins.json import DataClassJSONMixin
+from yarl import URL
 
 from .endpoint import ApiEndpoint
 from .request_method import RequestMethod
 
 E = TypeVar("E", bound=ApiEndpoint)
-ApiRequestVerbatimDataType = Union[None, Mapping[str, str], bytes, str, FormData]
+ApiRequestVerbatimDataType = Union[
+    None, Mapping[str, str], bytes, str, FormData
+]
 ApiRequestDataType = Union[ApiRequestVerbatimDataType, DataClassJSONMixin]
 
 
@@ -87,12 +89,16 @@ class ApiRequest(Generic[E]):
 @dataclass
 class ApiRequestBuilder:
     host: URL
-    method: Union[str, RequestMethod] = field(default=RequestMethod.GET, init=False)
+    method: Union[str, RequestMethod] = field(
+        default=RequestMethod.GET, init=False
+    )
     params: Optional[Mapping[str, str]] = field(default=None, init=False)
     data: Optional[DataClassJSONMixin] = field(default=None, init=False)
     timeout: Optional[ClientTimeout] = field(default=None, init=False)
 
-    def with_method(self, method: Union[str, RequestMethod]) -> "ApiRequestBuilder":
+    def with_method(
+        self, method: Union[str, RequestMethod]
+    ) -> "ApiRequestBuilder":
         if not isinstance(method, (str, RequestMethod)):
             raise TypeError(
                 f"Expected either a string or a RequestMethod instance, got: {type(method)} (value: {method})"
@@ -100,7 +106,9 @@ class ApiRequestBuilder:
         self.method = method
         return self
 
-    def with_params(self, params: Optional[Mapping[str, str]]) -> "ApiRequestBuilder":
+    def with_params(
+        self, params: Optional[Mapping[str, str]]
+    ) -> "ApiRequestBuilder":
         self.params = params
         return self
 
@@ -111,7 +119,9 @@ class ApiRequestBuilder:
         self.data = data
         return self
 
-    def with_timeout(self, timeout: Optional[ClientTimeout]) -> "ApiRequestBuilder":
+    def with_timeout(
+        self, timeout: Optional[ClientTimeout]
+    ) -> "ApiRequestBuilder":
         self.timeout = timeout
         return self
 

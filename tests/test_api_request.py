@@ -1,10 +1,10 @@
-from typing import Any, Type
 from dataclasses import dataclass
-from mashumaro.mixins.json import DataClassJSONMixin
+from typing import Any, Type
 
 import pytest
 from aiohttp import ClientTimeout, FormData
 from aiohttp.helpers import sentinel
+from mashumaro.mixins.json import DataClassJSONMixin
 from yarl import URL
 
 from reidun.endpoint import ApiEndpoint, ParamsBuilder
@@ -17,21 +17,21 @@ def test_api_request_builder_requires_host() -> None:
 
 
 def test_api_request_builder_accepts_custom_string_method() -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_method(
-        "POST"
-    )
+    ApiRequestBuilder(
+        URL("https://does-not-require-a-valid-host.com")
+    ).with_method("POST")
 
 
 def test_api_request_builder_accepts_enum_method() -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_method(
-        RequestMethod.POST
-    )
+    ApiRequestBuilder(
+        URL("https://does-not-require-a-valid-host.com")
+    ).with_method(RequestMethod.POST)
 
 
 def test_api_request_builder_accepts_custom_params() -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_params(
-        {"key": "value"}
-    )
+    ApiRequestBuilder(
+        URL("https://does-not-require-a-valid-host.com")
+    ).with_params({"key": "value"})
 
 
 @dataclass
@@ -48,13 +48,15 @@ class Td(DataClassJSONMixin):
     ],
 )
 def test_api_request_builder_accepts_custom_data(data: Any) -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_data(data)
+    ApiRequestBuilder(
+        URL("https://does-not-require-a-valid-host.com")
+    ).with_data(data)
 
 
 def test_api_request_builder_accepts_custom_timeout() -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_timeout(
-        ClientTimeout(total=60)
-    )
+    ApiRequestBuilder(
+        URL("https://does-not-require-a-valid-host.com")
+    ).with_timeout(ClientTimeout(total=60))
 
 
 def test_api_request_builder_builds_verbatim_request_with_defaults() -> None:
@@ -154,9 +156,9 @@ def test_api_request_provides_string_request_method() -> None:
 
 
 def test_verbatim_api_request_provides_request_timeout_method() -> None:
-    r: ApiRequestVerbatim = ApiRequestBuilder(URL("https://example.com")).build(
-        "/api/info"
-    )
+    r: ApiRequestVerbatim = ApiRequestBuilder(
+        URL("https://example.com")
+    ).build("/api/info")
 
     assert r.request_timeout() == sentinel
 
@@ -179,17 +181,17 @@ def test_api_request_provides_request_timeout_method() -> None:
         def path(self) -> str:
             return "/api/te"
 
-    r: ApiRequest[TestEndpoint] = ApiRequestBuilder(URL("https://example.com")).build(
-        TestEndpoint()
-    )
+    r: ApiRequest[TestEndpoint] = ApiRequestBuilder(
+        URL("https://example.com")
+    ).build(TestEndpoint())
 
     assert r.request_timeout() == sentinel
 
 
 def test_verbatim_api_request_provides_full_endpoint_url_for_endpoints() -> None:
-    r: ApiRequestVerbatim = ApiRequestBuilder(URL("https://example.com")).build(
-        "/api/info"
-    )
+    r: ApiRequestVerbatim = ApiRequestBuilder(
+        URL("https://example.com")
+    ).build("/api/info")
 
     assert r.endpoint_url() == URL("https://example.com/api/info")
 
@@ -212,9 +214,9 @@ def test_api_request_provides_full_endpoint_url_for_endpoints() -> None:
         def path(self) -> str:
             return "/api/te"
 
-    r: ApiRequest[TestEndpoint] = ApiRequestBuilder(URL("https://example.com")).build(
-        TestEndpoint()
-    )
+    r: ApiRequest[TestEndpoint] = ApiRequestBuilder(
+        URL("https://example.com")
+    ).build(TestEndpoint())
 
     assert r.endpoint_url() == URL("https://example.com/api/te")
 

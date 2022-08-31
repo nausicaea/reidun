@@ -1,18 +1,18 @@
 import logging
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Mapping, Optional, Tuple, Type, cast, Union
+from typing import Mapping, Optional, Tuple, Type, Union, cast
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
-from yarl import URL
 from mashumaro.mixins.json import DataClassJSONMixin
+from yarl import URL
 
-from .token_bucket import TokenBucket
 from .auth_method import AuthMethod
 from .endpoint import ApiEndpoint
 from .request import ApiRequest, ApiRequestBuilder, ApiRequestVerbatim
 from .request_method import RequestMethod
+from .token_bucket import TokenBucket
 
 _LOG: logging.Logger = logging.getLogger(__name__)
 
@@ -57,7 +57,9 @@ class ApiClient:
         ) as response:
             # FIXME: This is dangerous for large responses, as it loads everything into memory; [aiohttp](https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content)
             response_data = await response.read()
-            _LOG.debug(f"Received a response with {len(response_data)} bytes of data")
+            _LOG.debug(
+                f"Received a response with {len(response_data)} bytes of data"
+            )
 
             if not response.ok:
                 _LOG.error(
@@ -72,7 +74,9 @@ class ApiClient:
     async def request(
         self, request: ApiRequest[ApiEndpoint]
     ) -> Tuple[Optional[DataClassJSONMixin], int]:
-        _LOG.debug(f"Preparing a request to API endpoint {type(request.endpoint)}")
+        _LOG.debug(
+            f"Preparing a request to API endpoint {type(request.endpoint)}"
+        )
 
         verbatim_request: ApiRequestVerbatim = request.to_verbatim()
         response_data, response_status = await self.request_verbatim(
@@ -82,8 +86,12 @@ class ApiClient:
             return None, response_status
 
         response_data_decoded: str = response_data.decode(self.encoding)
-        response_data_type: Type[DataClassJSONMixin] = request.endpoint.response_data_type()
-        response_data_deserialized = response_data_type.from_json(response_data_decoded)
+        response_data_type: Type[
+            DataClassJSONMixin
+        ] = request.endpoint.response_data_type()
+        response_data_deserialized = response_data_type.from_json(
+            response_data_decoded
+        )
         return response_data_deserialized, response_status
 
     async def get(

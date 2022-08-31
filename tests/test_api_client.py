@@ -1,7 +1,7 @@
 import asyncio
-from typing import Optional, Tuple, Type, cast
-from dataclasses import dataclass
 import json
+from dataclasses import dataclass
+from typing import Optional, Tuple, Type, cast
 
 import pytest
 from aiohttp import ClientConnectorError, ClientTimeout
@@ -9,8 +9,8 @@ from flask import abort, make_response, request
 from flask.wrappers import Response
 from flask_httpauth import HTTPBasicAuth
 from http_server_mock import HttpServerMock
-from yarl import URL
 from mashumaro.mixins.json import DataClassJSONMixin
+from yarl import URL
 
 from reidun.auth_method import BasicAuth
 from reidun.client import ApiClient
@@ -178,7 +178,9 @@ async def test_client_can_send_custom_verbatim_request(
                 .build("/gettable-with-params")
             )
 
-            response_data, response_status = await client.request_verbatim(_request)
+            response_data, response_status = await client.request_verbatim(
+                _request
+            )
             assert response_data == b'{"a":"alpha","b":"false"}'
             assert response_status == 200
 
@@ -189,7 +191,9 @@ async def test_client_catches_unauthenticated_request_to_basic_auth_protected_se
 ) -> None:
     with app.run(server_deets[0], server_deets[1]):
         async with client as client:
-            _request: ApiRequestVerbatim = client.request_builder().build("/auth")
+            _request: ApiRequestVerbatim = client.request_builder().build(
+                "/auth"
+            )
 
             with pytest.raises(ValueError, match=r".*401.*"):
                 await client.request_verbatim(_request)
@@ -205,7 +209,9 @@ async def test_client_catches_bad_authentication_to_basic_auth_protected_server(
             URL(f"http://{server_deets[0]}:{server_deets[1]}"),
             auth=BasicAuth("admin", "badpassword"),
         ) as client:
-            _request: ApiRequestVerbatim = client.request_builder().build("/auth")
+            _request: ApiRequestVerbatim = client.request_builder().build(
+                "/auth"
+            )
 
             with pytest.raises(ValueError, match=r".*401.*"):
                 await client.request_verbatim(_request)
@@ -221,7 +227,9 @@ async def test_client_can_send_basic_authenticated_custom_verbatim_request(
             URL(f"http://{server_deets[0]}:{server_deets[1]}"),
             auth=BasicAuth("admin", "411u2b453423b310ng70u5"),
         ) as client:
-            _request: ApiRequestVerbatim = client.request_builder().build("/auth")
+            _request: ApiRequestVerbatim = client.request_builder().build(
+                "/auth"
+            )
 
             _response, _ = await client.request_verbatim(_request)
             assert _response == b'{"status":"success"}'

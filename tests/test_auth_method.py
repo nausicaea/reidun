@@ -45,7 +45,9 @@ def test_bearer_auth_requires_token() -> None:
 
 def test_bearer_auth_correctly_sets_authorization_header() -> None:
     ba: BearerAuth = BearerAuth("authentication-token")
-    assert ba.headers() == {aiohttp.hdrs.AUTHORIZATION: "Bearer authentication-token"}
+    assert ba.headers() == {
+        aiohttp.hdrs.AUTHORIZATION: "Bearer authentication-token"
+    }
 
 
 def test_raw_auth_is_an_auth_method() -> None:

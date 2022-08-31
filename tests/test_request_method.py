@@ -23,5 +23,7 @@ def test_request_method_is_enum() -> None:
         RequestMethod.PATCH,
     ],
 )
-def test_request_method_contains_most_common_methods(method: RequestMethod) -> None:
+def test_request_method_contains_most_common_methods(
+    method: RequestMethod,
+) -> None:
     assert method in RequestMethod
