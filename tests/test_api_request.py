@@ -1,15 +1,15 @@
 from typing import Any, Type
+from dataclasses import dataclass
+from mashumaro.mixins.json import DataClassJSONMixin
 
 import pytest
 from aiohttp import ClientTimeout, FormData
 from aiohttp.helpers import sentinel
-from marshmallow_dataclass import dataclass
 from yarl import URL
 
 from reidun.endpoint import ApiEndpoint, ParamsBuilder
 from reidun.request import ApiRequest, ApiRequestBuilder, ApiRequestVerbatim
 from reidun.request_method import RequestMethod
-from reidun.serialization import OutputFormat, SerializableData
 
 
 def test_api_request_builder_requires_host() -> None:
@@ -35,28 +35,20 @@ def test_api_request_builder_accepts_custom_params() -> None:
 
 
 @dataclass
-class Td(SerializableData):
+class Td(DataClassJSONMixin):
     a: str
     b: bool
 
 
 @pytest.mark.parametrize(
-    "data,fmt",
+    "data",
     [
-        ({"var_a": "Hello, World!", "var_b": "1.0"}, OutputFormat.FORM),
-        ({"var_a": "Hello, World!", "var_b": "1.0"}, OutputFormat.JSON),
-        (b"arbitrary byte data \x01\x0d", OutputFormat.RAW),
-        ("unicode string data 😊", OutputFormat.RAW),
-        (FormData([("a", 102), ("b", False)]), OutputFormat.FORM),
-        (FormData({"a": 102, "b": False}), OutputFormat.FORM),
-        (Td(a="Hello, World!", b=False), OutputFormat.JSON),
-        (Td(a="Hello, World!", b=False), OutputFormat.FORM),
+        ({"var_a": "Hello, World!", "var_b": "1.0"}),
+        (Td(a="Hello, World!", b=False)),
     ],
 )
-def test_api_request_builder_accepts_custom_data(data: Any, fmt: OutputFormat) -> None:
-    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_data(
-        data, fmt=fmt, many=False
-    )
+def test_api_request_builder_accepts_custom_data(data: Any) -> None:
+    ApiRequestBuilder(URL("https://does-not-require-a-valid-host.com")).with_data(data)
 
 
 def test_api_request_builder_accepts_custom_timeout() -> None:
@@ -80,14 +72,14 @@ def test_api_request_builder_builds_verbatim_request_with_defaults() -> None:
 
 def test_api_request_builder_builds_request_with_defaults() -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -128,14 +120,14 @@ def test_verbatim_api_request_provides_string_request_method() -> None:
 
 def test_api_request_provides_string_request_method() -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -171,14 +163,14 @@ def test_verbatim_api_request_provides_request_timeout_method() -> None:
 
 def test_api_request_provides_request_timeout_method() -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -204,14 +196,14 @@ def test_verbatim_api_request_provides_full_endpoint_url_for_endpoints() -> None
 
 def test_api_request_provides_full_endpoint_url_for_endpoints() -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -229,14 +221,14 @@ def test_api_request_provides_full_endpoint_url_for_endpoints() -> None:
 
 def test_api_request_can_be_converted_to_verbatim_api_request() -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:

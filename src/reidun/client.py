@@ -5,10 +5,9 @@ from typing import Mapping, Optional, Tuple, Type, cast, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
-from marshmallow import Schema
 from yarl import URL
+from mashumaro.mixins.json import DataClassJSONMixin
 
-from .serialization import SerializableData
 from .token_bucket import TokenBucket
 from .auth_method import AuthMethod
 from .endpoint import ApiEndpoint
@@ -72,7 +71,7 @@ class ApiClient:
 
     async def request(
         self, request: ApiRequest[ApiEndpoint]
-    ) -> Tuple[Optional[SerializableData], int]:
+    ) -> Tuple[Optional[DataClassJSONMixin], int]:
         _LOG.debug(f"Preparing a request to API endpoint {type(request.endpoint)}")
 
         verbatim_request: ApiRequestVerbatim = request.to_verbatim()
@@ -83,13 +82,13 @@ class ApiClient:
             return None, response_status
 
         response_data_decoded: str = response_data.decode(self.encoding)
-        response_data_schema: Schema = request.endpoint.response_data_type().Schema()
-        response_data_deserialized = response_data_schema.loads(response_data_decoded)
-        return cast(SerializableData, response_data_deserialized), response_status
+        response_data_type: Type[DataClassJSONMixin] = request.endpoint.response_data_type()
+        response_data_deserialized = response_data_type.from_json(response_data_decoded)
+        return response_data_deserialized, response_status
 
     async def get(
         self, endpoint: ApiEndpoint, params: Optional[Mapping[str, str]] = None
-    ) -> Tuple[Optional[SerializableData], int]:
+    ) -> Tuple[Optional[DataClassJSONMixin], int]:
         req: ApiRequest[ApiEndpoint] = (
             self.request_builder()
             .with_method(RequestMethod.GET)
@@ -102,15 +101,15 @@ class ApiClient:
     async def post(
         self,
         endpoint: ApiEndpoint,
-        data: SerializableData,
+        data: DataClassJSONMixin,
         params: Optional[Mapping[str, str]] = None,
         many: Optional[bool] = None,
-    ) -> Tuple[Optional[SerializableData], int]:
+    ) -> Tuple[Optional[DataClassJSONMixin], int]:
         req: ApiRequest[ApiEndpoint] = (
             self.request_builder()
             .with_method(RequestMethod.POST)
             .with_params(params)
-            .with_data(data, fmt=endpoint.request_format(), many=many)
+            .with_data(data)
             .build(endpoint)
         )
 
@@ -119,15 +118,15 @@ class ApiClient:
     async def put(
         self,
         endpoint: ApiEndpoint,
-        data: SerializableData,
+        data: DataClassJSONMixin,
         params: Optional[Mapping[str, str]] = None,
         many: Optional[bool] = None,
-    ) -> Tuple[Optional[SerializableData], int]:
+    ) -> Tuple[Optional[DataClassJSONMixin], int]:
         req: ApiRequest[ApiEndpoint] = (
             self.request_builder()
             .with_method(RequestMethod.PUT)
             .with_params(params)
-            .with_data(data, fmt=endpoint.request_format(), many=many)
+            .with_data(data)
             .build(endpoint)
         )
 

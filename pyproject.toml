@@ -1,16 +1,15 @@
 [tool.poetry]
 name = "reidun"
-version = "0.2.0"
+version = "0.3.0"
 description = ""
 authors = ["Eleanor Young <developer@nausicaea.net>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-marshmallow = '^3'
-marshmallow-dataclass = { version = '^8', extras = ['enum', 'union'] }
 yarl = '^1'
 aiohttp = '^3'
+mashumaro = "^3.0.4"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7"

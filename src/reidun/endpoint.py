@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Optional, Type
 
-from .serialization import OutputFormat, SerializableData
+from mashumaro.mixins.json import DataClassJSONMixin
 
 
 class ParamsBuilder(ABC):
@@ -20,16 +20,12 @@ class ApiEndpoint(ABC):
         ...
 
     @abstractmethod
-    def response_data_type(self) -> Type[SerializableData]:
+    def response_data_type(self) -> Type[DataClassJSONMixin]:
         ...
 
     @abstractmethod
-    def request_data_type(self) -> Type[SerializableData]:
+    def request_data_type(self) -> Type[DataClassJSONMixin]:
         ...
-
-    @staticmethod
-    def request_format() -> OutputFormat:
-        return OutputFormat.JSON
 
     @staticmethod
     def rate_limit() -> Optional[float]:

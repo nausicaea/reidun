@@ -1,19 +1,21 @@
 import asyncio
-from typing import Dict, Optional, Tuple, Type, cast
+from typing import Optional, Tuple, Type, cast
+from dataclasses import dataclass
+import json
 
 import pytest
 from aiohttp import ClientConnectorError, ClientTimeout
-from flask import Response, abort, make_response, request
+from flask import abort, make_response, request
+from flask.wrappers import Response
 from flask_httpauth import HTTPBasicAuth
 from http_server_mock import HttpServerMock
-from marshmallow_dataclass import dataclass
 from yarl import URL
+from mashumaro.mixins.json import DataClassJSONMixin
 
 from reidun.auth_method import BasicAuth
 from reidun.client import ApiClient
 from reidun.endpoint import ApiEndpoint, ParamsBuilder
 from reidun.request import ApiRequestBuilder, ApiRequestVerbatim
-from reidun.serialization import SerializableData
 
 app: HttpServerMock = HttpServerMock(__name__)
 auth: HTTPBasicAuth = HTTPBasicAuth()
@@ -97,7 +99,8 @@ def complex_post_endpoint() -> Response:
     if not request.is_json:
         abort(400)
 
-    request_data: str = cast(Dict[str, str], request.json)["string_variable"]
+    print(type(request.json))
+    request_data: str = json.loads(cast(str, request.json))["string_variable"]
     return make_response(
         {"you_said": request_data, "i_said": "Gooooood morning, Night City!"}
     )
@@ -275,14 +278,14 @@ async def test_client_can_send_typed_get_request(
     server_deets: Tuple[str, int], client: ApiClient
 ) -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         pass
 
     class TestSimpleGetEndpoint(ApiEndpoint):
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -302,7 +305,7 @@ async def test_client_can_send_typed_get_request_with_response_data(
     server_deets: Tuple[str, int], client: ApiClient
 ) -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         float_variable: float
         string_variable: str
         bool_variable: bool
@@ -311,7 +314,7 @@ async def test_client_can_send_typed_get_request_with_response_data(
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -343,7 +346,7 @@ async def test_client_can_send_typed_get_request_with_parameters_and_response_da
     expected: Tuple[float, str, bool],
 ) -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         float_variable: float
         string_variable: str
         bool_variable: bool
@@ -352,7 +355,7 @@ async def test_client_can_send_typed_get_request_with_parameters_and_response_da
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def response_data_type(self) -> Type[TestResponseData]:
@@ -376,12 +379,12 @@ async def test_client_can_send_typed_post_request_with_data(
     server_deets: Tuple[str, int], client: ApiClient
 ) -> None:
     @dataclass
-    class TestResponseData(SerializableData):
+    class TestResponseData(DataClassJSONMixin):
         you_said: str
         i_said: str
 
     @dataclass
-    class TestRequestData(SerializableData):
+    class TestRequestData(DataClassJSONMixin):
         string_variable: str
 
     class TestComplexPostEndpoint(ApiEndpoint):

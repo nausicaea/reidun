@@ -1,9 +1,9 @@
 from typing import Type
+from mashumaro.mixins.json import DataClassJSONMixin
 
 import pytest
 
 from reidun.endpoint import ApiEndpoint, ParamsBuilder
-from reidun.serialization import OutputFormat, SerializableData
 
 
 def test_endpoint_is_abstract_class() -> None:
@@ -32,10 +32,10 @@ def test_endpoint_implementation() -> None:
         def params(self) -> ParamsBuilder:
             raise NotImplementedError()
 
-        def request_data_type(self) -> Type[SerializableData]:
+        def request_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
-        def response_data_type(self) -> Type[SerializableData]:
+        def response_data_type(self) -> Type[DataClassJSONMixin]:
             raise NotImplementedError()
 
         def path(self) -> str:
@@ -52,7 +52,5 @@ def test_endpoint_implementation() -> None:
 
     with pytest.raises(NotImplementedError):
         TestEndpoint().path()
-
-    assert TestEndpoint.request_format() == OutputFormat.JSON
 
     assert TestEndpoint.rate_limit() is None

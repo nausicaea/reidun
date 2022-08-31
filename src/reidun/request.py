@@ -1,17 +1,17 @@
 from dataclasses import dataclass, field
 from typing import Generic, Mapping, Optional, TypeVar, Union, cast, overload
 
-from aiohttp import ClientTimeout, FormData, Payload
+from aiohttp import ClientTimeout, FormData, Payload, JsonPayload
 from aiohttp.helpers import sentinel
 from yarl import URL
+from mashumaro.mixins.json import DataClassJSONMixin
 
-from .serialization import OutputFormat, SerializableData, dump_to_payload
 from .endpoint import ApiEndpoint
 from .request_method import RequestMethod
 
 E = TypeVar("E", bound=ApiEndpoint)
 ApiRequestVerbatimDataType = Union[None, Mapping[str, str], bytes, str, FormData]
-ApiRequestDataType = Union[ApiRequestVerbatimDataType, SerializableData]
+ApiRequestDataType = Union[ApiRequestVerbatimDataType, DataClassJSONMixin]
 
 
 @dataclass(frozen=True)
@@ -89,9 +89,7 @@ class ApiRequestBuilder:
     host: URL
     method: Union[str, RequestMethod] = field(default=RequestMethod.GET, init=False)
     params: Optional[Mapping[str, str]] = field(default=None, init=False)
-    data: Optional[SerializableData] = field(default=None, init=False)
-    data_format: OutputFormat = field(default=OutputFormat.JSON, init=False)
-    dump_many: Optional[bool] = field(default=None, init=False)
+    data: Optional[DataClassJSONMixin] = field(default=None, init=False)
     timeout: Optional[ClientTimeout] = field(default=None, init=False)
 
     def with_method(self, method: Union[str, RequestMethod]) -> "ApiRequestBuilder":
@@ -108,14 +106,9 @@ class ApiRequestBuilder:
 
     def with_data(
         self,
-        data: SerializableData,
-        *,
-        fmt: OutputFormat = OutputFormat.JSON,
-        many: Optional[bool] = None,
+        data: DataClassJSONMixin,
     ) -> "ApiRequestBuilder":
         self.data = data
-        self.data_format = fmt
-        self.dump_many = many
         return self
 
     def with_timeout(self, timeout: Optional[ClientTimeout]) -> "ApiRequestBuilder":
@@ -135,9 +128,7 @@ class ApiRequestBuilder:
     ) -> Union[ApiRequestVerbatim, ApiRequest[E]]:
         payload: Optional[Payload] = None
         if self.data is not None:
-            payload = dump_to_payload(
-                self.data, fmt=self.data_format, many=self.dump_many
-            )
+            payload = JsonPayload(self.data.to_json())
 
         if isinstance(endpoint, str):
             return ApiRequestVerbatim(
