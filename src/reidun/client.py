@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Mapping, Optional, Tuple, Type, cast
+from typing import Mapping, Optional, Tuple, Type, cast, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
@@ -20,7 +20,7 @@ _LOG: logging.Logger = logging.getLogger(__name__)
 
 @dataclass
 class ApiClient:
-    host: URL
+    host: Union[URL, str]
     encoding: str = field(default="utf8")
     timeout: Optional[ClientTimeout] = field(default=None)
     auth: Optional[AuthMethod] = field(default=None)
@@ -28,7 +28,12 @@ class ApiClient:
     _tokens: TokenBucket = field(default_factory=TokenBucket, init=False)
 
     def request_builder(self) -> ApiRequestBuilder:
-        return ApiRequestBuilder(self.host)
+        if isinstance(self.host, URL):
+            return ApiRequestBuilder(self.host)
+        elif isinstance(self.host, str):
+            return ApiRequestBuilder(URL(self.host))
+        else:
+            raise TypeError("The host parameter is neither yarl.URL nor str")
 
     async def request_verbatim(
         self, request: ApiRequestVerbatim, rate_limit: Optional[float] = None
