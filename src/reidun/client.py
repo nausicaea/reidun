@@ -1,7 +1,7 @@
 import logging
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Mapping, Optional, Tuple, Type, Union, cast
+from typing import Mapping, Optional, Tuple, Type, TypeVar, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
@@ -15,6 +15,8 @@ from .request_method import RequestMethod
 from .token_bucket import TokenBucket
 
 _LOG: logging.Logger = logging.getLogger(__name__)
+I = TypeVar("I", bound=DataClassJSONMixin)
+O = TypeVar("O", bound=DataClassJSONMixin)
 
 
 @dataclass
@@ -111,7 +113,6 @@ class ApiClient:
         endpoint: ApiEndpoint,
         data: DataClassJSONMixin,
         params: Optional[Mapping[str, str]] = None,
-        many: Optional[bool] = None,
     ) -> Tuple[Optional[DataClassJSONMixin], int]:
         req: ApiRequest[ApiEndpoint] = (
             self.request_builder()
@@ -128,7 +129,6 @@ class ApiClient:
         endpoint: ApiEndpoint,
         data: DataClassJSONMixin,
         params: Optional[Mapping[str, str]] = None,
-        many: Optional[bool] = None,
     ) -> Tuple[Optional[DataClassJSONMixin], int]:
         req: ApiRequest[ApiEndpoint] = (
             self.request_builder()
