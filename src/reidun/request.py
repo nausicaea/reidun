@@ -138,7 +138,7 @@ class ApiRequestBuilder:
     ) -> Union[ApiRequestVerbatim, ApiRequest[E]]:
         payload: Optional[Payload] = None
         if self.data is not None:
-            payload = JsonPayload(self.data.to_json())
+            payload = JsonPayload(self.data.to_dict())
 
         if isinstance(endpoint, str):
             return ApiRequestVerbatim(
