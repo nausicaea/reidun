@@ -24,6 +24,7 @@ class ApiClient:
     host: Union[URL, str]
     encoding: str = field(default="utf8")
     timeout: Optional[ClientTimeout] = field(default=None)
+    rate_limit: Optional[float] = field(default=None)
     auth: Optional[AuthMethod] = field(default=None)
     _session: Optional[ClientSession] = field(default=None, init=False)
     _tokens: TokenBucket = field(default_factory=TokenBucket, init=False)
@@ -44,7 +45,13 @@ class ApiClient:
                 "You can only issue requests within an async context manager"
             )
 
-        await self._tokens.take(rate_limit)
+        if rate_limit is not None:
+            rl = rate_limit
+        elif self.rate_limit is not None:
+            rl = self.rate_limit
+        else:
+            rl = None
+        await self._tokens.take(rl)
 
         endpoint_url = request.endpoint_url()
         _LOG.debug(

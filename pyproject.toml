@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "reidun"
-version = "0.4.0"
+version = "0.4.1"
 description = ""
 authors = ["Eleanor Young <developer@nausicaea.net>"]
 license = "MIT"

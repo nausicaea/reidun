@@ -140,6 +140,7 @@ def test_create_client() -> None:
         URL("https://there-is-no-need-to-have-a-valid-server.com/"),
         encoding="latin1",
         timeout=ClientTimeout(total=60),
+        rate_limit=200 / 3600,
         auth=BasicAuth("admin", "411u2b453423b310ng70u5"),
     )
 
