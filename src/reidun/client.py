@@ -46,7 +46,7 @@ except ImportError as e:
     MEMORY = PassThroughMemory()
 
 
-@MEMORY.cache(ignore=["session", "tokens"])
+@MEMORY.cache(ignore=["session", "tokens", "rate_limit"])
 async def _rv(
     session: ClientSession,
     tokens: TokenBucket,
