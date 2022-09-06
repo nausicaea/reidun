@@ -1,9 +1,11 @@
 [tool.poetry]
 name = "reidun"
-version = "0.5.1"
+version = "0.5.2"
 description = ""
 authors = ["Eleanor Young <developer@nausicaea.net>"]
+readme = "README.md"
 license = "MIT"
+packages = [{include = "reidun", from = "src"}]
 
 [tool.poetry.extras]
 cache = ["joblib", "appdirs"]
@@ -38,7 +40,7 @@ ensure_newline_before_comments = true
 
 [tool.black]
 line-length = 79
-target-version = ['py36', 'py37', 'py38', 'py39']
+target-version = ['py36', 'py37', 'py38', 'py39', 'py310']
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
