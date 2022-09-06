@@ -24,7 +24,7 @@ try:
     from joblib import Memory
 
     _LOG.debug("Caching is enabled")
-    _APP_DIRS = AppDirs("net.nausicaea.ylva", "nausicaea")
+    _APP_DIRS = AppDirs("net.nausicaea.reidun", "nausicaea")
     MEMORY = Memory(_APP_DIRS.user_cache_dir)
 except ImportError as e:
     _LOG.debug(
