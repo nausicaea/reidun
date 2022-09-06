@@ -1,8 +1,8 @@
-import functools
 import logging
 from dataclasses import dataclass, field
+from pathlib import Path
 from types import TracebackType
-from typing import Any, List, Mapping, Optional, Tuple, Type, TypeVar, Union
+from typing import Mapping, Optional, Tuple, Type, TypeVar, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
@@ -20,33 +20,19 @@ I = TypeVar("I", bound=DataClassJSONMixin)
 O = TypeVar("O", bound=DataClassJSONMixin)
 
 try:
+    from aiohttp_client_cache.backends.sqlite import SQLiteBackend
+    from aiohttp_client_cache.session import CachedSession
     from appdirs import AppDirs
-    from joblib import Memory
 
     _LOG.debug("Caching is enabled")
     _APP_DIRS = AppDirs("net.nausicaea.reidun", "nausicaea")
-    MEMORY = Memory(_APP_DIRS.user_cache_dir)
 except ImportError as e:
-    _LOG.debug(
-        f"Either package joblib or appdirs is not available, so caching is disabled: {e}"
-    )
-
-    class PassThroughMemory:
-        def cache(self, func=None, ignore=None, verbose=None, mmap_mode=False):
-            if func is None:
-                return functools.partial(
-                    self.cache,
-                    ignore=ignore,
-                    verbose=verbose,
-                    mmap_mode=mmap_mode,
-                )
-
-            return func
-
-    MEMORY = PassThroughMemory()
+    _LOG.info(f"Caching cannot be enabled: {e}")
+    CachedSession = None
+    SQLiteBackend = None
+    _APP_DIRS = None
 
 
-@MEMORY.cache(ignore=["session", "tokens", "rate_limit"])
 async def _rv(
     *,
     session: ClientSession,
@@ -91,8 +77,8 @@ class ApiClient:
     timeout: Optional[ClientTimeout] = field(default=None)
     rate_limit: Optional[float] = field(default=None)
     auth: Optional[AuthMethod] = field(default=None)
-    _session: Optional[ClientSession] = field(default=None, init=False)
     _tokens: TokenBucket = field(default_factory=TokenBucket, init=False)
+    _session: Optional[ClientSession] = field(default=None, init=False)
 
     def request_builder(self) -> ApiRequestBuilder:
         if isinstance(self.host, URL):
@@ -194,7 +180,23 @@ class ApiClient:
     async def __aenter__(self) -> "ApiClient":
         timeout = self.timeout if self.timeout is not None else sentinel
         headers = self.auth.headers() if self.auth is not None else None
-        self._session = ClientSession(timeout=timeout, headers=headers)
+
+        if (
+            CachedSession is not None
+            and SQLiteBackend is not None
+            and _APP_DIRS is not None
+        ):
+            self._session = CachedSession(
+                timeout=timeout,
+                headers=headers,
+                cache=SQLiteBackend(
+                    str(
+                        Path(_APP_DIRS.user_cache_dir).joinpath("cache.sqlite")
+                    )
+                ),
+            )
+        else:
+            self._session = ClientSession(timeout=timeout, headers=headers)
 
         await self._session.__aenter__()
         return self
