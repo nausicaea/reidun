@@ -16,7 +16,7 @@ class TokenBucket:
     of tokens (ex. requests) available per second. The same token bucket can be used for multiple different endpoints.
     """
 
-    tokens: int = field(default=0)
+    tokens: int = field(default=1)
     tokens_updated_at: float = field(default_factory=monotonic)
     max_tokens: int = field(default=10)
 
