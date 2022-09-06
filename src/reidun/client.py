@@ -48,6 +48,7 @@ except ImportError as e:
 
 @MEMORY.cache(ignore=["session", "tokens", "rate_limit"])
 async def _rv(
+    *,
     session: ClientSession,
     tokens: TokenBucket,
     request: ApiRequestVerbatim,
@@ -116,7 +117,12 @@ class ApiClient:
                 "You can only issue requests within an async context manager"
             )
 
-        return await _rv(self._session, self._tokens, request, rl)
+        return await _rv(
+            session=self._session,
+            tokens=self._tokens,
+            request=request,
+            rate_limit=rl,
+        )
 
     async def request(
         self, request: ApiRequest[ApiEndpoint]
