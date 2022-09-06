@@ -100,7 +100,7 @@ def complex_post_endpoint() -> Response:
         abort(400)
 
     print(type(request.json))
-    request_data: str = json.loads(cast(str, request.json))["string_variable"]
+    request_data: str = request.json["string_variable"]
     return make_response(
         {"you_said": request_data, "i_said": "Gooooood morning, Night City!"}
     )

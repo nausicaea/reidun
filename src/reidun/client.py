@@ -1,7 +1,8 @@
+import functools
 import logging
 from dataclasses import dataclass, field
 from types import TracebackType
-from typing import Mapping, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, List, Mapping, Optional, Tuple, Type, TypeVar, Union
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
@@ -17,6 +18,69 @@ from .token_bucket import TokenBucket
 _LOG: logging.Logger = logging.getLogger(__name__)
 I = TypeVar("I", bound=DataClassJSONMixin)
 O = TypeVar("O", bound=DataClassJSONMixin)
+
+try:
+    from appdirs import AppDirs
+    from joblib import Memory
+
+    _LOG.debug("Caching is enabled")
+    _APP_DIRS = AppDirs("net.nausicaea.ylva", "nausicaea")
+    MEMORY = Memory(_APP_DIRS.user_cache_dir)
+except ImportError as e:
+    _LOG.debug(
+        f"Either package joblib or appdirs is not available, so caching is disabled: {e}"
+    )
+
+    class PassThroughMemory:
+        def cache(self, func=None, ignore=None, verbose=None, mmap_mode=False):
+            if func is None:
+                return functools.partial(
+                    self.cache,
+                    ignore=ignore,
+                    verbose=verbose,
+                    mmap_mode=mmap_mode,
+                )
+
+            return func
+
+    MEMORY = PassThroughMemory()
+
+
+@MEMORY.cache(ignore=["session", "tokens"])
+async def _rv(
+    session: ClientSession,
+    tokens: TokenBucket,
+    request: ApiRequestVerbatim,
+    rate_limit: Optional[float] = None,
+) -> Tuple[bytes, int]:
+    await tokens.take(rate_limit)
+
+    endpoint_url = request.endpoint_url()
+    _LOG.debug(
+        f"Issuing a {request.method} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
+    )
+    async with session.request(
+        request.request_method(),
+        endpoint_url,
+        params=request.params,
+        data=request.payload,
+        timeout=request.request_timeout(),
+    ) as response:
+        # FIXME: This is dangerous for large responses, as it loads everything into memory; [aiohttp](https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content)
+        response_data = await response.read()
+        _LOG.debug(
+            f"Received a response with {len(response_data)} bytes of data"
+        )
+
+        if not response.ok:
+            _LOG.error(
+                f"Received an error response from {response.host} with code {response.status}, headers {response.headers}, and data {response_data}"
+            )
+            raise ValueError(
+                f"The server responded with HTTP status code {response.status}: {response_data}"
+            )
+
+    return response_data.strip(), response.status
 
 
 @dataclass
@@ -40,45 +104,19 @@ class ApiClient:
     async def request_verbatim(
         self, request: ApiRequestVerbatim, rate_limit: Optional[float] = None
     ) -> Tuple[bytes, int]:
-        if self._session is None:
-            raise ValueError(
-                "You can only issue requests within an async context manager"
-            )
-
         if rate_limit is not None:
             rl = rate_limit
         elif self.rate_limit is not None:
             rl = self.rate_limit
         else:
             rl = None
-        await self._tokens.take(rl)
 
-        endpoint_url = request.endpoint_url()
-        _LOG.debug(
-            f"Issuing a {request.method} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
-        )
-        async with self._session.request(
-            request.request_method(),
-            endpoint_url,
-            params=request.params,
-            data=request.payload,
-            timeout=request.request_timeout(),
-        ) as response:
-            # FIXME: This is dangerous for large responses, as it loads everything into memory; [aiohttp](https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content)
-            response_data = await response.read()
-            _LOG.debug(
-                f"Received a response with {len(response_data)} bytes of data"
+        if self._session is None:
+            raise ValueError(
+                "You can only issue requests within an async context manager"
             )
 
-            if not response.ok:
-                _LOG.error(
-                    f"Received an error response from {response.host} with code {response.status}, headers {response.headers}, and data {response_data}"
-                )
-                raise ValueError(
-                    f"The server responded with HTTP status code {response.status}: {response_data}"
-                )
-
-        return response_data.strip(), response.status
+        return await _rv(self._session, self._tokens, request, rl)
 
     async def request(
         self, request: ApiRequest[ApiEndpoint]
