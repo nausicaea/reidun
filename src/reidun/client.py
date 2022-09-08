@@ -1,14 +1,23 @@
 import logging
 from dataclasses import dataclass, field
-from pathlib import Path
 from types import TracebackType
-from typing import Mapping, Optional, Tuple, Type, TypeVar, Union
+from typing import (
+    Any,
+    Callable,
+    Mapping,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from aiohttp import ClientSession, ClientTimeout
 from aiohttp.helpers import sentinel
 from mashumaro.mixins.json import DataClassJSONMixin
 from yarl import URL
 
+from . import _CACHE_DIR
 from .auth_method import AuthMethod
 from .endpoint import ApiEndpoint
 from .request import ApiRequest, ApiRequestBuilder, ApiRequestVerbatim
@@ -19,20 +28,35 @@ _LOG: logging.Logger = logging.getLogger(__name__)
 I = TypeVar("I", bound=DataClassJSONMixin)
 O = TypeVar("O", bound=DataClassJSONMixin)
 
+
 try:
-    from aiohttp_client_cache.backends.sqlite import SQLiteBackend
-    from aiohttp_client_cache.session import CachedSession
-    from appdirs import AppDirs
+    from charmonium.cache import (
+        DirObjStore,
+        FileRWLock,
+        MemoizedGroup,
+        memoize,
+    )
 
     _LOG.debug("Caching is enabled")
-    _APP_DIRS = AppDirs("net.nausicaea.reidun", "nausicaea")
+    _MEMOIZED_GROUP = MemoizedGroup(
+        obj_store=DirObjStore(_CACHE_DIR.joinpath("charmonium")),
+        size=1_048_576,  # 1MiB
+        lock=FileRWLock(_CACHE_DIR.joinpath("charmonium.lock")),
+    )
 except ImportError as e:
-    _LOG.info(f"Caching cannot be enabled: {e}")
-    CachedSession = None
-    SQLiteBackend = None
-    _APP_DIRS = None
+    _LOG.debug(f"Caching cannot be enabled: {e}")
+    MemoizedGroup = None
+    FileRWLock = None
+    DirObjStore = None
+    _MEMOIZED_GROUP = None
+
+    def memoize(
+        *, disable: str | bool | None = None, **kwargs: Any
+    ) -> Callable:
+        return lambda func: func
 
 
+@memoize(group=_MEMOIZED_GROUP)
 async def _rv(
     *,
     session: ClientSession,
@@ -44,7 +68,9 @@ async def _rv(
 
     endpoint_url = request.endpoint_url()
     _LOG.debug(
-        f"Issuing a {request.method} request to {endpoint_url} with {request.params} parameters and {request.payload.size if request.payload is not None else 0} bytes payload"
+        f"Issuing a {request.method} request to {endpoint_url} with "
+        f"{request.params if request.params is not None else 'no'} parameters "
+        f"and {request.payload.size if request.payload is not None else 0} bytes payload"
     )
     async with session.request(
         request.request_method(),
@@ -53,7 +79,8 @@ async def _rv(
         data=request.payload,
         timeout=request.request_timeout(),
     ) as response:
-        # FIXME: This is dangerous for large responses, as it loads everything into memory; [aiohttp](https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content)
+        # FIXME: This is dangerous for large responses, as it loads everything into memory;
+        # https://docs.aiohttp.org/en/stable/client_quickstart.html#streaming-response-content
         response_data = await response.read()
         _LOG.debug(
             f"Received a response with {len(response_data)} bytes of data"
@@ -61,7 +88,8 @@ async def _rv(
 
         if not response.ok:
             _LOG.error(
-                f"Received an error response from {response.host} with code {response.status}, headers {response.headers}, and data {response_data}"
+                f"Received an error response from {response.host} with code {response.status}, "
+                f"headers {response.headers}, and data {response_data}"
             )
             raise ValueError(
                 f"The server responded with HTTP status code {response.status}: {response_data}"
@@ -181,22 +209,7 @@ class ApiClient:
         timeout = self.timeout if self.timeout is not None else sentinel
         headers = self.auth.headers() if self.auth is not None else None
 
-        if (
-            CachedSession is not None
-            and SQLiteBackend is not None
-            and _APP_DIRS is not None
-        ):
-            self._session = CachedSession(
-                timeout=timeout,
-                headers=headers,
-                cache=SQLiteBackend(
-                    str(
-                        Path(_APP_DIRS.user_cache_dir).joinpath("cache.sqlite")
-                    )
-                ),
-            )
-        else:
-            self._session = ClientSession(timeout=timeout, headers=headers)
+        self._session = ClientSession(timeout=timeout, headers=headers)
 
         await self._session.__aenter__()
         return self

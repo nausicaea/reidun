@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "reidun"
-version = "0.5.4"
+version = "0.5.5"
 description = ""
 authors = ["Eleanor Young <developer@nausicaea.net>"]
 readme = "README.md"
@@ -8,15 +8,15 @@ license = "MIT"
 packages = [{include = "reidun", from = "src"}]
 
 [tool.poetry.extras]
-cache = ["aiohttp-client-cache", "appdirs"]
+cache = ["charmonium.cache"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
 yarl = '^1'
 aiohttp = '^3'
 mashumaro = "^3.0.4"
-appdirs = {version = "^1.4.4", optional = true}
-aiohttp-client-cache = {version = "^0.7.3", optional = true, extras = ["sqlite"]}
+appdirs = {version = "^1.4.4"}
+"charmonium.cache" = {version = "^1.2.11", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7"
