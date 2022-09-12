@@ -205,6 +205,22 @@ class ApiClient:
 
         return await self.request(req)
 
+    async def patch(
+        self,
+        endpoint: ApiEndpoint,
+        data: DataClassJSONMixin,
+        params: Optional[Mapping[str, str]] = None,
+    ) -> Tuple[Optional[DataClassJSONMixin], int]:
+        req: ApiRequest[ApiEndpoint] = (
+            self.request_builder()
+            .with_method(RequestMethod.PATCH)
+            .with_params(params)
+            .with_data(data)
+            .build(endpoint)
+        )
+
+        return await self.request(req)
+
     async def __aenter__(self) -> "ApiClient":
         timeout = self.timeout if self.timeout is not None else sentinel
         headers = self.auth.headers() if self.auth is not None else None
