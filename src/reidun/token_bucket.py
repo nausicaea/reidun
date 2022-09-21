@@ -3,10 +3,13 @@ Provide a token bucket algorithm that limits the caller to a certain call rate
 """
 
 import asyncio
+import logging
 from dataclasses import dataclass, field
 from math import floor
 from time import monotonic
 from typing import Optional
+
+_LOG: logging.Logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -38,6 +41,8 @@ class TokenBucket:
             if self.tokens + new_tokens >= 1:
                 self.tokens = min(self.tokens + new_tokens, self.max_tokens)
                 self.tokens_updated_at = now
+
+            _LOG.debug("Waiting for a rate limiting token")
             await asyncio.sleep(1.0 / rate_limit)
 
         # Take a token
