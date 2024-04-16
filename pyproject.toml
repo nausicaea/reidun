@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "reidun"
-version = "0.5.8"
+version = "0.5.9"
 description = "Reidun provides abstractions over REST APIs for clients"
 authors = ["Eleanor Young <developer@nausicaea.net>"]
 readme = "README.md"
