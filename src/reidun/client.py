@@ -153,9 +153,9 @@ class ApiClient:
             return None, response_status
 
         response_data_decoded: str = response_data.decode(self.encoding)
-        response_data_type: Type[
-            DataClassJSONMixin
-        ] = request.endpoint.response_data_type()
+        response_data_type: Type[DataClassJSONMixin] = (
+            request.endpoint.response_data_type()
+        )
         response_data_deserialized = response_data_type.from_json(
             response_data_decoded
         )

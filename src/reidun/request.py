@@ -126,12 +126,10 @@ class ApiRequestBuilder:
         return self
 
     @overload
-    def build(self, endpoint: str) -> ApiRequestVerbatim:
-        ...
+    def build(self, endpoint: str) -> ApiRequestVerbatim: ...
 
     @overload
-    def build(self, endpoint: E) -> ApiRequest[E]:
-        ...
+    def build(self, endpoint: E) -> ApiRequest[E]: ...
 
     def build(
         self, endpoint: Union[str, E]

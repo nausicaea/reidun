@@ -19,7 +19,9 @@ def testbasic_auth_is_an_auth_method() -> None:
     assert issubclass(BasicAuth, AuthMethod)
 
 
-def testbasic_auth_requires_username_and_password_with_default_encoding() -> None:
+def testbasic_auth_requires_username_and_password_with_default_encoding() -> (
+    None
+):
     ba: BasicAuth = BasicAuth("username", "password")
     assert ba.encoding == "latin1"
 

@@ -188,7 +188,9 @@ def test_api_request_provides_request_timeout_method() -> None:
     assert r.request_timeout() == sentinel
 
 
-def test_verbatim_api_request_provides_full_endpoint_url_for_endpoints() -> None:
+def test_verbatim_api_request_provides_full_endpoint_url_for_endpoints() -> (
+    None
+):
     r: ApiRequestVerbatim = ApiRequestBuilder(
         URL("https://example.com")
     ).build("/api/info")

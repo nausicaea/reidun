@@ -1,6 +1,7 @@
 """
 Provides various authentication method commonly used with REST APIs
 """
+
 from abc import ABC
 from base64 import b64encode
 from dataclasses import dataclass, field
