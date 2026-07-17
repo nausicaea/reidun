@@ -19,7 +19,7 @@ appdirs = {version = "^1.4.4"}
 "charmonium.cache" = {version = "^1.2.11", optional = true}
 
 [tool.poetry.dev-dependencies]
-pytest = "8.4.2"
+pytest = "9.1.1"
 pytest-asyncio = "1.4.0"
 Flask = {version = "3.1.3", extras = ["async"]}
 http-server-mock = '1.7'
