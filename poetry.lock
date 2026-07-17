@@ -350,17 +350,21 @@ dotenv = ["python-dotenv"]
 
 [[package]]
 name = "flask-httpauth"
-version = "4.0.0"
-description = "Basic and Digest HTTP authentication for Flask routes"
+version = "4.8.1"
+description = "HTTP authentication for Flask routes"
 optional = false
 python-versions = "*"
 files = [
-    {file = "Flask-HTTPAuth-4.0.0.tar.gz", hash = "sha256:47d62edc33ff16798ed28e06a7387ed10a15f21249c5f61515b41351356a6afc"},
-    {file = "Flask_HTTPAuth-4.0.0-py2.py3-none-any.whl", hash = "sha256:067768dbed7b68b2a0172453eaad64648cd6b004b8a2a3912f363050532d11c3"},
+    {file = "flask_httpauth-4.8.1-py3-none-any.whl", hash = "sha256:0080393d70e12327781f7509115175ec5e47209816489a620d4fd39e20cea2e8"},
+    {file = "flask_httpauth-4.8.1.tar.gz", hash = "sha256:88499b22f1353893743c3cd68f2ca561c4ad9ef75cd6bcc7f621161cd0e80744"},
 ]
 
 [package.dependencies]
-Flask = "*"
+flask = "*"
+
+[package.extras]
+dev = ["tox"]
+docs = ["furo", "sphinx"]
 
 [[package]]
 name = "frozenlist"
@@ -1058,4 +1062,4 @@ cache = ["charmonium.cache"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10"
-content-hash = "652ae870cb7a2fd49bf2aafc11830a6c4fb268e71f0f29e7bd17218e7f403fc0"
+content-hash = "313f060ded68a7724f763b47d6d0f4023136c73ece45913079fb14a5e1dc1f72"
