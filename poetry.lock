@@ -586,17 +586,17 @@ files = [
 
 [[package]]
 name = "mashumaro"
-version = "3.12"
+version = "3.22"
 description = "Fast and well tested serialization library"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.10"
 files = [
-    {file = "mashumaro-3.12-py3-none-any.whl", hash = "sha256:bc4ab7ecaca106fcde706d77cef22816149285a10727b88141599855d4603e2f"},
-    {file = "mashumaro-3.12.tar.gz", hash = "sha256:bb4ff10aee689edff24f6ff369843e1a826193d396b449b86ef58489bfe40c83"},
+    {file = "mashumaro-3.22-py3-none-any.whl", hash = "sha256:17dc4d7294c33ef380a8b929dda0608577aa2141988c00a0c4932310108fe71d"},
+    {file = "mashumaro-3.22.tar.gz", hash = "sha256:64538cc365204402a060ebde683a86505b5a4344acf6870d79021e9fbfe57360"},
 ]
 
 [package.dependencies]
-typing-extensions = ">=4.1.0"
+typing_extensions = ">=4.14.0"
 
 [package.extras]
 msgpack = ["msgpack (>=0.5.6)"]
@@ -912,13 +912,13 @@ files = [
 
 [[package]]
 name = "typing-extensions"
-version = "4.11.0"
-description = "Backported and Experimental Type Hints for Python 3.8+"
+version = "4.16.0"
+description = "Backported and Experimental Type Hints for Python 3.9+"
 optional = false
-python-versions = ">=3.8"
+python-versions = ">=3.9"
 files = [
-    {file = "typing_extensions-4.11.0-py3-none-any.whl", hash = "sha256:c1f94d72897edaf4ce775bb7558d5b79d8126906a14ea5ed1635921406c0387a"},
-    {file = "typing_extensions-4.11.0.tar.gz", hash = "sha256:83f085bd5ca59c80295fc2a82ab5dac679cbe02b9f33f7d83af68e241bea51b0"},
+    {file = "typing_extensions-4.16.0-py3-none-any.whl", hash = "sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"},
+    {file = "typing_extensions-4.16.0.tar.gz", hash = "sha256:dc983d19a509c94dba722ee6abd33940f7c05a89e243c47e907eb4db6f1a43e5"},
 ]
 
 [[package]]
