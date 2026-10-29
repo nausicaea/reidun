@@ -1570,5 +1570,5 @@ cache = ["charmonium.cache"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "3.15.0"
-content-hash = "cf394429b2058b7995520804c03f03b30385fa0679a37b80f0691f4a9bcf55cf"
+python-versions = "3.15.1"
+content-hash = "367f97644d554805373620360295a5f2a4418c76d8dfe99bd5594c2beee8c8d9"
