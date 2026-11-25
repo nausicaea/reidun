@@ -37,6 +37,14 @@ ensure_newline_before_comments = true
 line-length = 79
 target-version = ['py36', 'py37', 'py38', 'py39', 'py310']
 
+[tool.commitizen]
+name = "cz_conventional_commits"
+tag_format = "v$version"
+version_scheme = "pep440"
+version_provider = "poetry"
+update_changelog_on_bump = true
+major_version_zero = true
+
 [build-system]
 requires = ["poetry-core==2.5.0"]
 build-backend = "poetry.core.masonry.api"
